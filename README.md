@@ -13,6 +13,10 @@ A comprehensive Python package for fitting sparse tensor decomposition models op
 - 📈 **Rich Visualization**: Built-in plotting for components, temporal patterns, and species comparisons
 - 🚀 **High Performance**: Leverages TensorLy for efficient tensor operations
 - 📦 **Easy Installation**: Uses `uv` for fast, reproducible package management
+- ⏰ **Auto-Timestamped Outputs**: Every run creates a timestamped directory with all results
+- 📝 **Automatic Reporting**: Generates comprehensive README for each analysis explaining all outputs
+- ✅ **Data Validation**: Validates your data format before analysis
+- 🔌 **Custom Data Support**: Easy to use with your own gene expression data
 
 ## Installation
 
@@ -241,29 +245,145 @@ for gene, loading in markers[:10]:
     print(f"  {gene}: {loading:.4f}")
 ```
 
-## Command-Line Interface
+## Using Your Own Data
 
-STDM provides a command-line interface for quick analysis:
+STDM makes it easy to analyze your own gene expression data:
+
+### Step 1: Validate Your Data
 
 ```bash
-# Fit CP decomposition on merged data
+# Check if your data format is correct
+stdm-fit --data-path /path/to/your/data.csv --validate-only
+```
+
+### Step 2: Run Analysis
+
+```bash
+# Analyze with auto-timestamped output and comprehensive reporting
 stdm-fit \
-    --data-dir data/merge-vst \
-    --data-type merged \
+    --data-path /path/to/your/data.csv \
     --method cp \
     --rank 15 \
-    --output-dir results/cli \
+    --normalize \
+    --output-dir results/my_analysis
+```
+
+### Step 3: Review Results
+
+Each run creates a timestamped directory (e.g., `results/my_analysis/cp_20241012_143022/`) containing:
+- **ANALYSIS_README.md** - Comprehensive report explaining all outputs
+- **Factor matrices** - CSV files with decomposition results
+- **Metadata** - JSON file with dimension labels
+- **Visualizations** - PNG plots of components
+
+**Your Data Format:**
+
+Merged CSV:
+```csv
+group_id,SPECIES-IND-TP1,SPECIES-IND-TP2,...
+GENE001,5.2,6.1,...
+GENE002,7.3,8.2,...
+```
+
+Or separate files (one per species):
+```
+my_data/
+├── species1_normalized_expression.csv
+├── species2_normalized_expression.csv
+└── species3_normalized_expression.csv
+```
+
+See `examples/custom_data_analysis.py` for a complete example.
+
+## Command-Line Interface
+
+STDM provides a powerful command-line interface with auto-reporting:
+
+```bash
+# Basic analysis (auto-timestamped, with report)
+stdm-fit \
+    --data-path data/merge-vst/vst_counts_matrix.csv \
+    --method cp \
+    --rank 15 \
     --normalize
 
-# Fit Tucker decomposition on separate data
+# Advanced options
 stdm-fit \
-    --data-dir data/separate-log \
+    --data-path data/separate-log \
     --data-type separate \
     --method tucker \
     --rank 10 \
-    --output-dir results/tucker \
     --non-negative \
-    --normalize
+    --normalize \
+    --n-iter 200 \
+    --output-dir results/tucker
+
+# Disable auto-timestamping (overwrite results)
+stdm-fit \
+    --data-path your_data.csv \
+    --method cp \
+    --rank 10 \
+    --no-timestamp
+
+# Validate data only (no analysis)
+stdm-fit --data-path your_data.csv --validate-only
+```
+
+### CLI Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--data-path` | Path to data file or directory | Required |
+| `--data-type` | Data type: merged, separate, or auto | auto |
+| `--method` | Decomposition: cp or tucker | cp |
+| `--rank` | Number of components | 10 |
+| `--output-dir` | Base output directory | results |
+| `--no-timestamp` | Disable timestamped subdirectories | False |
+| `--no-report` | Disable automatic reporting | False |
+| `--normalize` | Apply z-score normalization | False |
+| `--non-negative` | Use non-negative decomposition | False |
+| `--n-iter` | Maximum iterations | 100 |
+| `--validate-only` | Only validate data format | False |
+
+## Understanding Your Results
+
+### Auto-Generated Analysis Report
+
+Every analysis generates an `ANALYSIS_README.md` that explains:
+
+1. **Output Files** - What each CSV and JSON file contains
+2. **Interpretation Guide** - How to read factor matrices
+3. **Quality Metrics** - Assessment of your model fit
+4. **Optimal Parameters** - Recommendations for improving results
+5. **Next Steps** - Code examples for further analysis
+
+### Example Report Structure
+
+```
+results/cp_20241012_143022/
+├── ANALYSIS_README.md              ← Read this first!
+├── cp_factor_genes.csv             ← Gene loadings (10225 × 10)
+├── cp_factor_individuals.csv       ← Individual patterns (28 × 10)
+├── cp_factor_timepoints.csv        ← Temporal dynamics (4 × 10)
+├── cp_factor_species.csv           ← Species patterns (3 × 10)
+├── cp_metadata.json                ← Dimension labels
+└── cp_components.png               ← Visualization
+```
+
+### Reading Factor Matrices
+
+```python
+import pandas as pd
+
+# Load gene factor
+genes = pd.read_csv("results/*/cp_factor_genes.csv", index_col=0)
+
+# Get top genes for component 0
+top_genes = genes["component_0"].abs().nlargest(50)
+print(top_genes)
+
+# Export for GO enrichment
+top_genes.index.to_series().to_csv("component_0_genes.txt", index=False)
 ```
 
 ## Example Scripts
@@ -273,6 +393,8 @@ The `examples/` directory contains complete analysis scripts:
 - **`fit_merged_data.py`**: Comprehensive analysis of merged data with CP and Tucker decomposition
 - **`fit_separate_data.py`**: Analysis of species-separated data
 - **`compare_models.py`**: Compare different ranks and methods
+- **`custom_data_analysis.py`**: 🆕 Complete guide for using your own data with auto-reporting
+- **`quickstart_notebook.ipynb`**: Interactive Jupyter tutorial
 
 Run examples:
 
@@ -285,6 +407,9 @@ python examples/fit_separate_data.py
 
 # Compare models and ranks
 python examples/compare_models.py
+
+# 🆕 Use your own data (demonstrates all new features)
+python examples/custom_data_analysis.py
 ```
 
 ## API Reference
@@ -351,6 +476,60 @@ Tucker decomposition.
 - `plot_temporal_patterns(time_factor, timepoints)`: Plot temporal dynamics
 - `plot_species_comparison(species_factor, species_names)`: Compare species patterns
 - `plot_gene_loadings(gene_factor, gene_names, component_idx)`: Plot top gene loadings
+
+### New Features (v0.1.0) 🆕
+
+#### `DataValidator`
+
+Validate user-provided gene expression data.
+
+**Methods**:
+```python
+validator = DataValidator(strict=False)
+
+# Validate merged CSV file
+is_valid, messages = validator.validate_merged_data("data.csv")
+
+# Validate separate species files
+is_valid, messages = validator.validate_separate_data("data_dir/")
+
+# Print validation report
+validator.print_report()
+```
+
+#### `AnalysisReport`
+
+Generate comprehensive analysis reports automatically.
+
+**Usage**:
+```python
+from stdm import AnalysisReport
+
+reporter = AnalysisReport(output_dir)
+report_path = reporter.generate_run_report(
+    method="CP",
+    tensor_shape=tensor.shape,
+    rank=10,
+    reconstruction_error=0.25,
+    explained_variance=0.82,
+    runtime_seconds=120,
+    metadata=metadata,
+    factors=factors
+)
+# Creates detailed ANALYSIS_README.md in output_dir
+```
+
+#### `create_timestamped_output_dir`
+
+Create timestamped directories for each analysis run.
+
+**Usage**:
+```python
+from stdm import create_timestamped_output_dir
+
+# Creates directory like: results/cp_20241012_143022/
+output_dir = create_timestamped_output_dir("results", prefix="cp")
+```
 
 ### Utility Functions
 
