@@ -4,31 +4,26 @@ Welcome to STDM! This guide will help you get up and running with tensor decompo
 
 ## Table of Contents
 
-1. [Quick Setup](#quick-setup)
-2. [Your First Analysis](#your-first-analysis)
-3. [Understanding Your Results](#understanding-your-results)
-4. [Common Workflows](#common-workflows)
-5. [Troubleshooting](#troubleshooting)
+1.  [Quick Setup](#quick-setup)
+2.  [Your First Analysis](#your-first-analysis)
+3.  [Understanding Your Results](#understanding-your-results)
+4.  [Common Workflows](#common-workflows)
+5.  [Troubleshooting](#troubleshooting)
 
-## Quick Setup
+## Quick Setup {#quick-setup}
 
 ### Option 1: Automated Setup (Recommended)
 
-```bash
+``` bash
 cd /Users/sr320/Documents/GitHub/workflow-stdm-05
 ./setup.sh
 ```
 
-This script will:
-- ✅ Detect and use `uv` (or fall back to `pip`)
-- ✅ Create a virtual environment
-- ✅ Install all dependencies
-- ✅ Verify the installation
-- ✅ Check for data files
+This script will: - ✅ Detect and use `uv` (or fall back to `pip`) - ✅ Create a virtual environment - ✅ Install all dependencies - ✅ Verify the installation - ✅ Check for data files
 
 ### Option 2: Manual Setup
 
-```bash
+``` bash
 # Install uv (if not already installed)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -43,7 +38,7 @@ uv pip install -e .
 
 ### Verify Installation
 
-```bash
+``` bash
 # Test import
 python -c "import stdm; print(f'STDM v{stdm.__version__} is ready!')"
 
@@ -51,11 +46,11 @@ python -c "import stdm; print(f'STDM v{stdm.__version__} is ready!')"
 stdm-fit --help
 ```
 
-## Your First Analysis
+## Your First Analysis {#your-first-analysis}
 
 ### Step 1: Explore Your Data
 
-```python
+``` python
 from stdm import DataLoader
 from pathlib import Path
 
@@ -69,7 +64,8 @@ print(f"Sample names: {data.columns[:5].tolist()}")
 ```
 
 **Expected Output**:
-```
+
+```         
 Loaded merged data: 10225 genes × 112 samples
 Loaded: 10225 genes × 112 samples
 Sample names: ['ACR-139-TP1', 'ACR-139-TP2', 'ACR-139-TP3', 'ACR-139-TP4', 'ACR-145-TP1']
@@ -77,7 +73,7 @@ Sample names: ['ACR-139-TP1', 'ACR-139-TP2', 'ACR-139-TP3', 'ACR-139-TP4', 'ACR-
 
 ### Step 2: Preprocess
 
-```python
+``` python
 # Filter low expression genes
 data_filtered = loader.filter_low_expression(
     data, 
@@ -97,7 +93,7 @@ print(f"After filtering: {data_normalized.shape[0]} genes")
 
 ### Step 3: Build Tensor
 
-```python
+``` python
 from stdm import TensorBuilder
 
 builder = TensorBuilder()
@@ -113,7 +109,8 @@ print(f"  Species: {metadata['species']}")
 ```
 
 **Expected Output**:
-```
+
+```         
 Built tensor with shape: (9792, 28, 4, 3)
 Dimensions:
   Genes: 9792
@@ -124,7 +121,7 @@ Dimensions:
 
 ### Step 4: Fit Model
 
-```python
+``` python
 from stdm import CPDecomposition
 
 # Create model
@@ -145,7 +142,7 @@ print(f"\nReconstruction error: {error:.6f}")
 
 ### Step 5: Visualize
 
-```python
+``` python
 from stdm.visualization import (
     plot_components,
     plot_temporal_patterns,
@@ -172,33 +169,30 @@ plot_species_comparison(
 )
 ```
 
-## Understanding Your Results
+## Understanding Your Results {#understanding-your-results}
 
 ### What are the Factors?
 
 After decomposition, you get 4 factor matrices:
 
-1. **Gene Factor** (shape: genes × rank)
-   - Shows which genes contribute to each component
-   - High values = gene is strongly associated with that component
-
-2. **Individual Factor** (shape: individuals × rank)
-   - Shows expression patterns for each individual
-   - Captures individual-specific variation
-
-3. **Time Factor** (shape: time points × rank)
-   - Shows temporal dynamics of each component
-   - Reveals patterns that change over time
-
-4. **Species Factor** (shape: species × rank)
-   - Shows species-specific patterns
-   - Identifies conserved vs. species-specific components
+1.  **Gene Factor** (shape: genes × rank)
+    -   Shows which genes contribute to each component
+    -   High values = gene is strongly associated with that component
+2.  **Individual Factor** (shape: individuals × rank)
+    -   Shows expression patterns for each individual
+    -   Captures individual-specific variation
+3.  **Time Factor** (shape: time points × rank)
+    -   Shows temporal dynamics of each component
+    -   Reveals patterns that change over time
+4.  **Species Factor** (shape: species × rank)
+    -   Shows species-specific patterns
+    -   Identifies conserved vs. species-specific components
 
 ### Interpreting Components
 
 Each component (column in the factors) represents a pattern in the data:
 
-```python
+``` python
 # Analyze component 0
 print("Component 1 Analysis:")
 
@@ -227,11 +221,11 @@ for gene, loading in markers:
     print(f"  {gene}: {loading:.4f}")
 ```
 
-## Common Workflows
+## Common Workflows {#common-workflows}
 
 ### Workflow 1: Find Optimal Rank
 
-```python
+``` python
 from stdm.visualization import plot_reconstruction_error
 
 # Test different ranks
@@ -251,7 +245,7 @@ plot_reconstruction_error(errors, save_path="results/rank_comparison.png")
 
 ### Workflow 2: Compare CP vs Tucker
 
-```python
+``` python
 from stdm import TuckerDecomposition
 
 # CP decomposition
@@ -270,7 +264,7 @@ print(f"Tucker error: {tucker_error:.6f}")
 
 ### Workflow 3: Analyze Separate Species
 
-```python
+``` python
 # Load separate species data
 loader = DataLoader("data/separate-log")
 species_data = loader.load_separate_data()
@@ -289,7 +283,7 @@ model.fit(tensor)
 
 ### Workflow 4: Export Results
 
-```python
+``` python
 from stdm.utils import save_results
 
 # Save all factors and metadata
@@ -312,10 +306,10 @@ save_results(
 
 For quick analyses without writing code:
 
-```bash
+``` bash
 # Basic analysis
 stdm-fit \
-    --data-dir data/merge-vst \
+    --data-path data/separate-log \
     --data-type merged \
     --method cp \
     --rank 15 \
@@ -345,7 +339,7 @@ stdm-fit \
 
 The `examples/` directory contains complete analysis pipelines:
 
-```bash
+``` bash
 # Activate virtual environment first
 source .venv/bin/activate
 
@@ -361,7 +355,7 @@ python examples/compare_models.py
 
 ## Working with Jupyter Notebooks
 
-```bash
+``` bash
 # Install Jupyter (if not already installed)
 uv pip install jupyter
 
@@ -371,11 +365,11 @@ jupyter notebook
 # Open examples/quickstart_notebook.ipynb
 ```
 
-## Troubleshooting
+## Troubleshooting {#troubleshooting}
 
 ### Issue: "Module not found" error
 
-```bash
+``` bash
 # Make sure virtual environment is activated
 source .venv/bin/activate
 
@@ -385,7 +379,7 @@ uv pip install -e .
 
 ### Issue: TensorLy convergence warnings
 
-```python
+``` python
 # Increase iterations
 model.fit(tensor, n_iter_max=200)
 
@@ -395,7 +389,7 @@ model.fit(tensor, init='svd')
 
 ### Issue: Out of memory
 
-```python
+``` python
 # Filter more aggressively
 data = loader.filter_low_expression(data, min_expression=10.0)
 
@@ -405,7 +399,7 @@ model = CPDecomposition(rank=5)  # instead of rank=20
 
 ### Issue: Poor reconstruction
 
-```python
+``` python
 # Try non-negative decomposition
 model = CPDecomposition(rank=10, non_negative=True)
 
@@ -418,25 +412,25 @@ model = TuckerDecomposition(rank=(100, 20, 4, 3))
 
 ## Next Steps
 
-1. **Read the full documentation**: [README.md](README.md)
-2. **Study the examples**: Explore `examples/` directory
-3. **Run tests**: `pytest tests/ -v`
-4. **Check package summary**: [PACKAGE_SUMMARY.md](PACKAGE_SUMMARY.md)
-5. **Read installation guide**: [INSTALL.md](INSTALL.md)
+1.  **Read the full documentation**: [README.md](README.md)
+2.  **Study the examples**: Explore `examples/` directory
+3.  **Run tests**: `pytest tests/ -v`
+4.  **Check package summary**: [PACKAGE_SUMMARY.md](PACKAGE_SUMMARY.md)
+5.  **Read installation guide**: [INSTALL.md](INSTALL.md)
 
 ## Getting Help
 
-- **Documentation**: README.md, INSTALL.md, PACKAGE_SUMMARY.md
-- **Examples**: examples/ directory
-- **Tests**: tests/ directory for usage patterns
-- **GitHub Issues**: Report bugs or request features
-- **Email**: your.email@example.com
+-   **Documentation**: README.md, INSTALL.md, PACKAGE_SUMMARY.md
+-   **Examples**: examples/ directory
+-   **Tests**: tests/ directory for usage patterns
+-   **GitHub Issues**: Report bugs or request features
+-   **Email**: [your.email\@example.com](mailto:your.email@example.com){.email}
 
 ## Quick Reference
 
 ### Common Imports
 
-```python
+``` python
 # Core functionality
 from stdm import DataLoader, TensorBuilder, CPDecomposition, TuckerDecomposition
 
@@ -458,7 +452,7 @@ from stdm.utils import (
 
 ### Typical Analysis Pipeline
 
-```python
+``` python
 # 1. Load data
 loader = DataLoader("data/merge-vst")
 data = loader.load_merged_data()
@@ -487,4 +481,3 @@ save_results(factors, builder.get_metadata(), "results/")
 ```
 
 Happy analyzing! 🧬📊
-
