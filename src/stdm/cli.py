@@ -10,8 +10,8 @@ from stdm import (
     DataLoader, TensorBuilder, CPDecomposition, TuckerDecomposition,
     AnalysisReport, create_timestamped_output_dir, DataValidator
 )
-from stdm.utils import save_results, compute_explained_variance
-from stdm.visualization import plot_components
+from stdm.utils import save_results, compute_explained_variance, extract_component_genes
+from stdm.visualization import plot_components, plot_temporal_expression
 
 
 def main():
@@ -222,8 +222,31 @@ def main():
             n_components=min(5, args.rank),
             save_path=output_dir / f"{args.method}_components.png"
         )
+        
+        # Generate temporal expression plot (key output)
+        if len(factors) >= 3 and len(metadata.get('timepoints', [])) > 0:
+            plot_temporal_expression(
+                factors[2],  # Time factor
+                metadata['timepoints'],
+                n_components=args.rank,
+                save_path=output_dir / "component_expression_over_time.png",
+                title="Component Expression Across Time Points"
+            )
     except Exception as e:
         print(f"   ⚠️  Could not generate plots: {e}")
+    
+    # Extract gene lists (key output)
+    print("\n📝 Extracting top genes per component...")
+    try:
+        if len(factors) >= 1 and len(metadata.get('genes', [])) > 0:
+            extract_component_genes(
+                factors[0],  # Gene factor
+                metadata['genes'],
+                output_dir,
+                top_n=50
+            )
+    except Exception as e:
+        print(f"   ⚠️  Could not extract genes: {e}")
     
     # Generate report
     if not args.no_report:
@@ -246,10 +269,13 @@ def main():
     print("✅ Analysis completed successfully!")
     print(f"📁 All results saved to: {output_dir}")
     print("=" * 70)
-    print("\nNext steps:")
-    print(f"  1. Read the analysis report: {output_dir}/ANALYSIS_README.md")
-    print(f"  2. Examine factor matrices: {output_dir}/*_factor_*.csv")
-    print(f"  3. View visualizations: {output_dir}/*.png")
+    print("\n🎯 KEY OUTPUTS:")
+    print(f"  📈 Temporal plot: component_expression_over_time.png")
+    print(f"  📝 Gene lists: component_genes_summary.txt & component_genes.csv")
+    print("\n📚 Additional outputs:")
+    print(f"  1. Analysis report: ANALYSIS_README.md")
+    print(f"  2. Factor matrices: *_factor_*.csv")
+    print(f"  3. Visualizations: *.png")
     print("=" * 70)
 
 

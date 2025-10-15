@@ -409,7 +409,7 @@ Each component represents a distinct gene expression pattern characterized by:
        model = CPDecomposition(rank=rank)
        model.fit(tensor)
        error = model.compute_reconstruction_error(tensor)
-       print(f"Rank {rank}: Error = {error:.4f}")
+       print(f"Rank {current_rank}: Error = {error:.4f}")
    ```
 
 2. **Cross-Validation**:

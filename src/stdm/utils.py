@@ -314,3 +314,105 @@ def cross_validate_rank(
     
     return avg_errors
 
+
+def extract_component_genes(
+    gene_factor: np.ndarray,
+    gene_names: List[str],
+    output_dir: str,
+    top_n: int = 50,
+    threshold: Optional[float] = None
+):
+    """
+    Extract and save top genes for each component in a readable format.
+    
+    Creates both individual files per component and a summary file.
+    
+    Parameters
+    ----------
+    gene_factor : np.ndarray
+        Gene mode factor matrix (genes × components).
+    gene_names : list of str
+        List of gene names/IDs.
+    output_dir : str
+        Output directory path.
+    top_n : int, default=50
+        Number of top genes to save per component.
+    threshold : float, optional
+        Minimum absolute loading threshold. If None, uses top_n only.
+    """
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    n_components = gene_factor.shape[1]
+    
+    # Create summary file
+    summary_path = output_path / "component_genes_summary.txt"
+    with open(summary_path, 'w') as summary_file:
+        summary_file.write("=" * 80 + "\n")
+        summary_file.write("TOP GENES PER COMPONENT\n")
+        summary_file.write("=" * 80 + "\n\n")
+        
+        for comp_idx in range(n_components):
+            component = gene_factor[:, comp_idx]
+            
+            # Get top genes by absolute loading
+            abs_loadings = np.abs(component)
+            top_indices = np.argsort(abs_loadings)[-top_n:][::-1]
+            
+            # Filter by threshold if specified
+            if threshold is not None:
+                top_indices = [i for i in top_indices if abs_loadings[i] >= threshold]
+            
+            # Create per-component file
+            comp_file = output_path / f"component_{comp_idx + 1}_genes.txt"
+            with open(comp_file, 'w') as f:
+                f.write(f"Component {comp_idx + 1} - Top {len(top_indices)} Genes\n")
+                f.write("=" * 60 + "\n")
+                f.write(f"{'Rank':<6} {'Gene':<20} {'Loading':<15} {'Abs Loading':<15}\n")
+                f.write("-" * 60 + "\n")
+                
+                for rank, idx in enumerate(top_indices, 1):
+                    gene_name = gene_names[idx]
+                    loading = component[idx]
+                    abs_loading = abs(loading)
+                    f.write(f"{rank:<6} {gene_name:<20} {loading:< 15.6f} {abs_loading:< 15.6f}\n")
+            
+            # Write to summary file
+            summary_file.write(f"\n{'='*80}\n")
+            summary_file.write(f"COMPONENT {comp_idx + 1}\n")
+            summary_file.write(f"{'='*80}\n")
+            summary_file.write(f"Top {min(10, len(top_indices))} genes (total: {len(top_indices)}):\n\n")
+            
+            for rank, idx in enumerate(top_indices[:10], 1):
+                gene_name = gene_names[idx]
+                loading = component[idx]
+                summary_file.write(f"  {rank:2d}. {gene_name:<20} (loading: {loading:>8.4f})\n")
+            
+            if len(top_indices) > 10:
+                summary_file.write(f"\n  ... and {len(top_indices) - 10} more genes\n")
+            summary_file.write(f"\n  See component_{comp_idx + 1}_genes.txt for full list\n")
+    
+    # Also create a simple CSV for easy import
+    csv_path = output_path / "component_genes.csv"
+    with open(csv_path, 'w') as f:
+        f.write("Component,Rank,Gene,Loading,AbsLoading\n")
+        
+        for comp_idx in range(n_components):
+            component = gene_factor[:, comp_idx]
+            abs_loadings = np.abs(component)
+            top_indices = np.argsort(abs_loadings)[-top_n:][::-1]
+            
+            if threshold is not None:
+                top_indices = [i for i in top_indices if abs_loadings[i] >= threshold]
+            
+            for rank, idx in enumerate(top_indices, 1):
+                gene_name = gene_names[idx]
+                loading = component[idx]
+                abs_loading = abs(loading)
+                f.write(f"{comp_idx + 1},{rank},{gene_name},{loading:.6f},{abs_loading:.6f}\n")
+    
+    print(f"✅ Saved gene lists to {output_path}")
+    print(f"   - Summary: {summary_path.name}")
+    print(f"   - CSV: {csv_path.name}")
+    print(f"   - Individual files: component_*_genes.txt")
+

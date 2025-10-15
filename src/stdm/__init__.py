@@ -11,9 +11,15 @@ __author__ = "Your Name"
 from stdm.data_loader import DataLoader
 from stdm.tensor_builder import TensorBuilder
 from stdm.decomposition import CPDecomposition, TuckerDecomposition
-from stdm.visualization import plot_components, plot_reconstruction_error, plot_factor_heatmap
+from stdm.visualization import (
+    plot_components, 
+    plot_reconstruction_error, 
+    plot_factor_heatmap,
+    plot_temporal_expression
+)
 from stdm.auto_report import AnalysisReport, create_timestamped_output_dir
 from stdm.data_validator import DataValidator, validate_and_load
+from stdm.utils import extract_component_genes
 
 __all__ = [
     "DataLoader",
@@ -23,9 +29,11 @@ __all__ = [
     "plot_components",
     "plot_reconstruction_error",
     "plot_factor_heatmap",
+    "plot_temporal_expression",
     "AnalysisReport",
     "create_timestamped_output_dir",
     "DataValidator",
     "validate_and_load",
+    "extract_component_genes",
 ]
 

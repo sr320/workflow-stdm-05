@@ -353,3 +353,73 @@ def plot_gene_loadings(
     
     plt.show()
 
+
+def plot_temporal_expression(
+    time_factor: np.ndarray,
+    timepoints: List[Union[int, str]],
+    n_components: Optional[int] = None,
+    figsize: Tuple[int, int] = (14, 8),
+    save_path: Optional[str] = None,
+    title: str = "Component Expression Over Time"
+):
+    """
+    Create a clear line plot showing component expression across time points.
+    
+    This is the primary visualization for temporal patterns in the data.
+    Each line represents one component's activity level over time.
+    
+    Parameters
+    ----------
+    time_factor : np.ndarray
+        Time mode factor matrix (timepoints × components).
+    timepoints : list
+        List of time point labels.
+    n_components : int, optional
+        Number of components to plot. If None, plots all components.
+    figsize : tuple, default=(14, 8)
+        Figure size.
+    save_path : str, optional
+        Path to save the figure.
+    title : str
+        Plot title.
+    """
+    plt.figure(figsize=figsize)
+    
+    n_comp = time_factor.shape[1] if n_components is None else min(time_factor.shape[1], n_components)
+    
+    # Use a colormap for better distinction
+    colors = plt.cm.tab10(np.linspace(0, 1, n_comp))
+    
+    for i in range(n_comp):
+        plt.plot(
+            timepoints, 
+            time_factor[:, i], 
+            'o-', 
+            linewidth=2.5, 
+            markersize=10, 
+            label=f'Component {i+1}',
+            alpha=0.8,
+            color=colors[i]
+        )
+    
+    plt.xlabel('Time Point', fontsize=14, fontweight='bold')
+    plt.ylabel('Component Expression', fontsize=14, fontweight='bold')
+    plt.title(title, fontsize=16, fontweight='bold', pad=20)
+    plt.legend(loc='best', fontsize=11, framealpha=0.9)
+    plt.grid(True, alpha=0.3, linestyle='--')
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    
+    # Add zero line for reference
+    plt.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"✅ Saved temporal expression plot to {save_path}")
+    else:
+        plt.show()
+    
+    plt.close()
+
